@@ -3,8 +3,8 @@
 This repository is for explaining the Bluetooth based occupancy detection system using Raspberry Pi.
 
 The repository is structed as follows:
-- Individual Presence:
-- Crowd Density:
+- `Individual Presence`:
+- `Crowd Density`:
 
 ## `Individual Presence` folder
 This folder contains blabla: `temporal` or blabla and `meta` or the data is collected from.
