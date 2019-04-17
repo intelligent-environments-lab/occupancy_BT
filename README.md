@@ -6,10 +6,10 @@ The repository is structed as follows:
 - `Individual Presence`:
 - `Crowd Density`:
 
-%## `Individual Presence` folder
-%This folder contains blabla: `temporal` or blabla and `meta` or the data is collected from.
+<!--- -->## `Individual Presence` folder
+This folder contains blabla: `temporal` or blabla and `meta` or the data is collected from.
 
-%## `Crowd Density` folder
+## `Crowd Density` folder
 %blablabla `blablabla` - blablabla (or **blablabla**) as blablabla
 
 ## Publication
