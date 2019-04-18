@@ -1,10 +1,10 @@
 # Occupcny detection by Bluetooth device tracking
 
-This repository is for explaining the Bluetooth based occupancy detection system using Raspberry Pi.
+This repository is for the Bluetooth based occupancy detection system using Raspberry Pi.
 
 The repository is structed as follows:
-- `Individual Presence`:
-- `Crowd Density`:
+- `Individual Presence`: The l2ping command is used. The system sends packets to pre-defined occupant devices. If a positive return signal is received, then it is considered as occupied, otherwise unoccupied.
+- `Crowd Density`: The lescan command is used. Every one minute, Raspberry Pi logs the number of advertising Bluetooth devices with hashed MAC addresses.
 
 <!---
 ## `Individual Presence` folder
