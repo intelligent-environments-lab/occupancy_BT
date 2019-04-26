@@ -1,0 +1,74 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf200
+{\fonttbl\f0\fswiss\fcharset0 ArialMT;\f1\fswiss\fcharset0 Arial-BoldMT;\f2\fswiss\fcharset0 Arial-ItalicMT;
+}
+{\colortbl;\red255\green255\blue255;\red58\green58\blue58;}
+{\*\expandedcolortbl;;\csgenericrgb\c22745\c22745\c22745;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}.}{\leveltext\leveltemplateid1\'02\'00.;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}.}{\leveltext\leveltemplateid101\'02\'00.;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listlevel\levelnfc4\levelnfcn4\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{lower-alpha\}.}{\leveltext\leveltemplateid102\'02\'01.;}{\levelnumbers\'01;}\fi-360\li1440\lin1440 }{\listname ;}\listid2}
+{\list\listtemplateid3\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}.}{\leveltext\leveltemplateid201\'02\'00.;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listlevel\levelnfc4\levelnfcn4\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{lower-alpha\}.}{\leveltext\leveltemplateid202\'02\'01.;}{\levelnumbers\'01;}\fi-360\li1440\lin1440 }{\listname ;}\listid3}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\ri0\partightenfactor0
+
+\f0\fs24 \cf0 Copying Original SD card content to disk for cloning\
+\pard\pardeftab720\li720\fi-360\ri0\partightenfactor0
+\ls1\ilvl0\cf0 1)	Insert MicroSD\
+2)	Open \'93Terminal\'94 app in mac.\
+\pard\pardeftab720\ri0\partightenfactor0
+\cf0 Type:\
+\pard\pardeftab720\li720\fi-360\ri0\partightenfactor0
+\ls2\ilvl0
+\f1\b \cf0 3)	diskutil list\
+\pard\pardeftab720\li1440\fi-360\ri0\partightenfactor0
+\ls2\ilvl1
+\f0\b0 \cf0 a.	Note /dev/disk# for the microSD card inserted\
+\pard\pardeftab720\li720\fi-360\ri0\partightenfactor0
+\ls2\ilvl1
+\f1\b \cf0 4)	sudo dd if=/dev/disk# of=~/Desktop/RPi.img
+\f0\b0        ***This process takes a while and does NOT show any updates on the terminal screen***Note the location of the \'91.img \'91 file as this will be our input file path\
+\pard\pardeftab720\ri0\partightenfactor0
+\cf0 \
+Copying cloned image to a microSD card\
+Remove old SD card and insert blank SD card\
+\pard\pardeftab720\li720\fi-360\ri0\partightenfactor0
+\ls3\ilvl1
+\f1\b \cf0 1)	diskutil list\
+\pard\pardeftab720\li1440\fi-360\ri0\partightenfactor0
+\ls3\ilvl1
+\f0\b0 \cf0 a.	Again note the /dev/disk# for the disk inserted. This will be our \'93of\'94 destination\
+\pard\pardeftab720\li720\fi-360\ri0\partightenfactor0
+\ls3\ilvl1
+\f1\b \cf0 2)	sudo diskutil unmountDisk /dev/disk#\
+3)	sudo\cf2  \cf0 newfs_msdos -F 16 /dev/disk2\
+4)	sudo dd if=~/Desktop/RPi.img of=/dev/disk#
+\f0\b0 \
+\pard\pardeftab720\ri0\partightenfactor0
+\cf0 \
+Wifi setup\
+\pard\pardeftab720\ri0\partightenfactor0
+
+\f2\i \cf0 \
+\pard\pardeftab720\ri0\partightenfactor0
+
+\f1\i0\b \cf0 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf\
+\pard\pardeftab720\ri0\partightenfactor0
+
+\f2\i\b0 \cf0 Type: (note: it\'92s easier to type /etc/wpa and press TAB and then wpa again and press TAB again)\
+\pard\pardeftab720\ri0\partightenfactor0
+
+\f1\i0\b \cf0 \
+\pard\pardeftab720\ri0\partightenfactor0
+
+\f0\b0 \cf0 At the bottom of document add:\
+\
+\pard\pardeftab720\ri0\partightenfactor0
+
+\f1\b \cf0 network = \{\
+	ssid=\'94\'94\
+	psk=\'94\'94\
+\}\
+\pard\pardeftab720\ri0\partightenfactor0
+
+\f0\b0 \cf0 \
+within the \'93\'94 marks, enter the name of connection for SSID and the password for PSK.}
