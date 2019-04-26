@@ -1,0 +1,27 @@
+Copying Original SD card content to disk for cloning
+1) Insert MicroSD
+2) Open 'Terminal' app in mac.
+Type:
+3) diskutil list
+Note /dev/disk# for the microSD card inserted
+4) sudo dd if=/dev/disk# of=~/Desktop/RPi.img       
+***This process takes a while and does NOT show any updates on the terminal screen***
+Note the location of the '.img' file as this will be our input file path
+
+Copying cloned image to a microSD card
+Remove old SD card and insert blank SD card
+1) diskutil list
+a. Again note the /dev/disk# for the disk inserted. This will be our ÒofÓ destination
+2) sudo diskutil unmountDisk /dev/disk#
+3) sudo newfs_msdos -F 16 /dev/disk2
+4) sudo dd if=~/Desktop/RPi.img of=/dev/disk#
+
+Wifi setup
+sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+Type: (note: it's easier to type /etc/wpa and press TAB and then wpa again and press TAB again)
+At the bottom of document add:
+network = {
+	ssid=''
+	psk=''
+}
+within the marks, enter the name of connection for SSID and the password for PSK.
