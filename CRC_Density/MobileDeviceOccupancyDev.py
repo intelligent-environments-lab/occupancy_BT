@@ -201,13 +201,21 @@ def CRC(week, occupancy_profile, population):
         else:
             n[hour] = mc[hour]/(r[hour]) // 1
             '''
+    # convert to lengths sum up over days
+    for day in range(5):
+        for hour in range(25):
+            m[hour] += len(tempMark_list[hour])
+            c[hour] += len(captured_list[hour])
+            r[hour] += len(recaptured_list[hour])
     for hour in range(25):
-        print(recaptured_list[hour])
-        if recaptured_list[hour] == []:
+        try:
+            n[hour] = m[hour]*c[hour]/(r[hour]) // 1
+        except ZeroDivisionError as error:
             n[hour] = 0
-        else:
-            n[hour] = len(tempMark_list[ele])*len(captured_list[ele])/(len(recaptured_list[ele])) // 1
-    print(n[hour])
+    #  print our n values
+    for hour in range(1,25):
+        n[hour] = n[hour]/n[0]
+    print(n)
 
 
 
