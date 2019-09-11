@@ -41,7 +41,7 @@ class Occupant:
     def lowercounter(self):
         if self.counter != 0:
              self.counter = self.counter-1
-        else:
+        elif self.counter < 0:
             print("Error: counter is already 0")
 
     def give_counter(self):
@@ -118,29 +118,39 @@ def CRC(week, occupancy_profile, population):
 
     day_counter = 0
     hour_counter = 0
-    mc = [0]*24
-    m = [0]*24
-    c = [0]*24
-    r = [0]*24
-    n = [0]*24
-    c_list = [0]*24
+    mc = [0]*25
+    m = [0]*25
+    c = [0]*25
+    r = [0]*25
+    n = [0]*25
+    c_list = [0]*25
+    tempMark_list = [0]*25
+    captured_list = [0]*25
+    recaptured_list = [0]*25
+
     # first day generate a list of marked occupants for each hour summing up over the days
     for day in range(5):
         if day != 0:
             print("DAY: ", day)
         # not sure if should get rid r = [0] * 24
         # next perform a daily sample
-        for hour in range(24):
+        for hour in range(25):
+
             if day == 0:
                 hour_list = []
                 for occupant in week[day][hour]:
                    hour_list.append(occupant)
                 marked.append(hour_list)
+                tempMark_list[hour] = week[day][hour]
+                captured_list[hour] = week[day][hour]
+                recaptured_list[hour] = []
+
             else:
                 # WE ARE HERE IS THE DEBUGING
                 # generate c values
                 # UNCOMMENT TO PRINT TESTS
-                c_list[hour] = week[day][hour]
+                #c_list[hour] = week[day][hour]
+
                 # print("HOUR:",hour)
                 # print("MARKED")
                 # print_occupants(marked[hour])
@@ -148,25 +158,56 @@ def CRC(week, occupancy_profile, population):
                 # print_occupants(c[hour])
                 # print("")
                 # generate r values
-                c[hour] = len(c_list[hour])
-                for occupant in c_list[hour]:
-                    if occupant in marked[hour]:
-                        r[hour] = r[hour] + 1
+                #c[hour] = len(c_list[hour])
+                #for occupant in c_list[hour]:
+                #    if occupant in marked[hour]:
+                #        r[hour] = r[hour] + 1
                 # marking all found occupants
-                for occupant in week[day][hour]:
-                    if occupant not in marked[hour]:
-                        marked[hour].append(occupant)
+                #for occupant in week[day][hour]:
+                #    if occupant not in marked[hour]:
+                #        marked[hour].append(occupant)
+
+                #list all captures for this iteration
+                captured_list[hour] = week[day][hour]
+                #find number of recaptures
+
+                #count all recaptures
+                for occ in week[day][hour]:
+                    if occ in tempMark_list[hour]:
+                        recaptured_list[hour].append(occ)
+                # mark all non marked occupants
+                for occ in week[day][hour]:
+                    if occ not in tempMark_list[hour]:
+                        tempMark_list[hour].append(occ)
 
             m[hour] = len(marked[hour])
             #summing over multiple days
             mc[hour] = mc[hour] + (m[hour] * c[hour])
-    for hour in range(24):
-        if(r[hour] == 0):
+
+        if debug:
+            print("C Values")
+            print_seperator()
+            print("DAY: " + str(day))
+            for ele in range(25):
+                if(ele == 0):
+                    print("HOUR " + str(ele))
+                    print(len(tempMark_list[ele]))
+                    print(len(captured_list[ele]))
+                    print(len(recaptured_list[ele]))
+
+    '''for hour in range(25):
+        if r[hour] == 0:
             n[hour] = 0
         else:
-            n[hour] = mc[hour]/(r[hour])//1
-    print(n)
-
+            n[hour] = mc[hour]/(r[hour]) // 1
+            '''
+    for hour in range(25):
+        print(recaptured_list[hour])
+        if recaptured_list[hour] == []:
+            n[hour] = 0
+        else:
+            n[hour] = len(tempMark_list[ele])*len(captured_list[ele])/(len(recaptured_list[ele])) // 1
+    print(n[hour])
 
 
 
@@ -184,7 +225,7 @@ def CRC(week, occupancy_profile, population):
 
 
 
-def run_simulation(list_of_occupants, occupancy_profile):
+def run_simulation(list_of_occupants, occupancy_profile,debug):
     day1 = []
     day2 = []
     day3 = []
@@ -193,25 +234,41 @@ def run_simulation(list_of_occupants, occupancy_profile):
     week = [day1, day2, day3, day4, day5]
 
     # iterate for 5 days a week and for every one hour interval in that day
+    # print full list of sampled occupants for all days
+    if debug:
+        print()
+        print()
+        print("Occupant Breakdown")
+        print_seperator()
     for day in range(5):
         # reset all occupants data
+        hourlyList = []
         list_found_occupants = []
         list_unfound_occupants = []
         random.shuffle(list_of_occupants)
         for occupant in list_of_occupants:
             occupant.reset_occupant()
-        if day == 1:
-            list_of_occupants = sample_day(.5, list_of_occupants)
-            print_occupants(list_of_occupants)
-        for hour in range(24):
+        sampled_list = []
+        sampled_list = sample_day(.5, list_of_occupants)
+        if debug:
+            print()
+            print_seperator()
+            print()
+            print("Day " + str(day))
+            print("All Occupants on Day: " +str(day))
+            print_occupants(sampled_list)
+        for hour in range(25):
             # check how many occupants should be in the building at the time interval
-            actual_occupants = occupancy_profile[hour]*len(list_of_occupants)//1
+            if hour == 0:
+                actual_occupants = len(sampled_list)
+            else:
+                actual_occupants = occupancy_profile[hour]*len(sampled_list)//1
             # check how many occupants are currently in the building
             list_of_ids = []
             for occupant in list_found_occupants:
                 list_of_ids.append(occupant.id)
 
-            for occupant in list_of_occupants:
+            for occupant in sampled_list:
                 # make sure occupant is not already in the list
                 if occupant.onSite and occupant.id not in list_of_ids:
                     list_found_occupants.append(occupant)
@@ -227,12 +284,13 @@ def run_simulation(list_of_occupants, occupancy_profile):
             # DISPLAYS THE HOUR print("CRC Calculated for Hour:", hour + 1)
             # print_occupants_detailed(list_found_occupants)
             # if a mobile device was detected append it to the proper time slot
+            if debug:
+                hourlyList.append(list_found_occupants)
             crc_list = []
             for occupant in list_found_occupants:
                 if occupant.hasMD:
                     crc_list.append(occupant)
             week[day].append(crc_list)
-
         # update for the stayed occupants for next iteration
             templist = []
 
@@ -245,7 +303,19 @@ def run_simulation(list_of_occupants, occupancy_profile):
                 else:
                     list_unfound_occupants.append(occupant)
             list_found_occupants = templist
-    CRC(week, occupancy_profile, len(list_of_occupants))
+        # print Hourly Breakdown
+        if debug:
+            print()
+            for x in range(25):
+                if(hour == 0):
+                    print()
+                    print("Hour " + str(x))
+                    print_occupants(hourlyList[x])
+                    print("WEEK")
+                    print_occupants(week[day][x])
+                    print
+    CRC(week, occupancy_profile, len(sampled_list))
+    return
 
 
 def sample_day(sample_ratio, occupant_list):
@@ -273,6 +343,11 @@ def print_occupants_detailed(list_of_occupants):
         print("Occupant {} has Device {} Counter is {}".format(occupant, occupant.DeviceID, str(occupant.counter)))
 
 
+# prints seperator
+def print_seperator():
+    print("-----------------------------------------------------------------------------------------------------------")
+
+
 def print_2d_occupant_matrix(week):
     day_counter = 0
     for day in week:
@@ -286,15 +361,15 @@ def print_2d_occupant_matrix(week):
                 print("Occupant {} has Device {}".format(occupant, occupant.DeviceID))
 
 
-def main():
+# runs program step by step with print functions
+def debug():
     # Array of Populations To Be Tested
-    PopulationList = [500, 1000, 1500, 2000]
-    ratioList = [.05, .1, .3, .5, .6, .7, .8, .9]
 
-    test_populationList = [50]
+    test_populationList = [10]
     test_ratioList = [.7]
-    occupancy_profile = [.01, .01, .01, .01, .01, .01, .1, .2, .7, .7, .7, .7,
+    occupancy_profile = [.5, .01, .01, .01, .01, .01, .01, .1, .2, .7, .7, .7, .7,
                          .5, .7, .7, .7, .7, .3, .1, .1, .1, .1, .01, .05]
+
     list_of_occupants = []
 
     # perform all CRC operations for every population and ratio given
@@ -304,7 +379,35 @@ def main():
             list_of_occupants = create_occupants(population, ratio)
             random.shuffle(list_of_occupants)
             # set a random number of occupants to found depending on the occupancy profile and time
-            list_of_occupants = run_simulation(list_of_occupants, occupancy_profile)
+            # test if the right population and BT Ratio are being printed out
+            print("OCCUPANT TEST")
+            print_seperator()
+            print_occupants(list_of_occupants)
+            list_of_occupants = run_simulation(list_of_occupants, occupancy_profile,True)
 
-main()
+
+def main():
+    # Array of Populations To Be Tested
+    PopulationList = [500, 1000, 1500, 2000]
+    ratioList = [.05, .1, .3, .5, .6, .7, .8, .9]
+
+    test_populationList = [10]
+    test_ratioList = [.7]
+    occupancy_profile = [.5, .01, .01, .01, .01, .01, .01, .1, .2, .7, .7, .7, .7,
+                         .5, .7, .7, .7, .7, .3, .1, .1, .1, .1, .01, .05]
+
+    list_of_occupants = []
+
+    # perform all CRC operations for every population and ratio given
+    for population in test_populationList:
+        for ratio in test_ratioList:
+            # create_occupants works
+            list_of_occupants = create_occupants(population, ratio)
+            random.shuffle(list_of_occupants)
+            # set a random number of occupants to found depending on the occupancy profile and time
+            list_of_occupants = run_simulation(list_of_occupants, occupancy_profile,False)
+
+debug()
+
+
 
