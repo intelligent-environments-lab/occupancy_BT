@@ -176,13 +176,14 @@ def CRC(week, occupancy_profile, population):
                     if occ in tempMark_list[hour]:
                         recaptured_list[hour].append(occ)
                 # mark all non marked occupants
+                m[hour] += len(tempMark_list[hour])
+                c[hour] += len(captured_list[hour])
+                r[hour] += len(recaptured_list[hour])
                 for occ in week[day][hour]:
                     if occ not in tempMark_list[hour]:
                         tempMark_list[hour].append(occ)
 
-            m[hour] = len(marked[hour])
             #summing over multiple days
-            mc[hour] = mc[hour] + (m[hour] * c[hour])
 
         if debug:
             print("C Values")
@@ -202,19 +203,22 @@ def CRC(week, occupancy_profile, population):
             n[hour] = mc[hour]/(r[hour]) // 1
             '''
     # convert to lengths sum up over days
-    for day in range(5):
-        for hour in range(25):
-            m[hour] += len(tempMark_list[hour])
-            c[hour] += len(captured_list[hour])
-            r[hour] += len(recaptured_list[hour])
+
     for hour in range(25):
         try:
-            n[hour] = m[hour]*c[hour]/(r[hour]) // 1
+            n[hour] = m[hour]*c[hour]/(r[hour]) / 1
         except ZeroDivisionError as error:
             n[hour] = 0
     #  print our n values
     for hour in range(1,25):
         n[hour] = n[hour]/n[0]
+    if debug:
+        print("M Array:")
+        print(m)
+        print("C Array:")
+        print(c)
+        print("R Array:")
+        print(r)
     print(n)
 
 
@@ -399,7 +403,7 @@ def main():
     PopulationList = [500, 1000, 1500, 2000]
     ratioList = [.05, .1, .3, .5, .6, .7, .8, .9]
 
-    test_populationList = [10]
+    test_populationList = [1000]
     test_ratioList = [.7]
     occupancy_profile = [.5, .01, .01, .01, .01, .01, .01, .1, .2, .7, .7, .7, .7,
                          .5, .7, .7, .7, .7, .3, .1, .1, .1, .1, .01, .05]
