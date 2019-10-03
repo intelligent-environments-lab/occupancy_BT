@@ -2,6 +2,12 @@ import math
 import random
 import string
 
+# notes
+# OCCUPANCY AS a scale of population e.g. 80% occupants stay an hour
+# Duration may be the problem.  have to check all individual for population
+# Transition Ratio - Consider a range of values.  Is a function of time. [2-9pm Prime time 2]
+# Refer to academic calendar
+# People without BT Devices are not staying, no ratio value
 class Occupant:
     # Our Representation of a simulated person
 
@@ -15,8 +21,9 @@ class Occupant:
         self.detected = detected
         self.counter = 0
         # Number of Hours occupant spends detected before leaving the building
-        self.transitionRatio = 1
+        self.transitionRatio = 0
         self.DeviceID = "None"
+        self.firstHour = False
 
     def __str__(self):
         return str(self.id)
@@ -45,7 +52,7 @@ class Occupant:
             print("Error: counter is already 0")
 
     def give_counter(self):
-        self.counter = self.transitionRatio
+        self.counter = 2
 
     # Occupant enters the simulated building and is detected if they have a
     # BT devices they are given the transition ratio regardless of detection
@@ -56,8 +63,11 @@ class Occupant:
         else:
             self.detected = False
             self.onSite = True
-        self.give_counter()
-
+        if self.firstHour:
+            self.firstHour = False
+            self.counter = 0
+        else:
+            self.give_counter()
     # Simulates 1 hour time interval (This number could be changed and isn't attached to anything physically),
     # removes occupant if they are past the transition ratio, otherwise it lowers the counter
     def simulateinterval(self):
@@ -140,12 +150,14 @@ def CRC(week, occupancy_profile, population):
                 hour_list = []
                 for occupant in week[day][hour]:
                    hour_list.append(occupant)
+                # don't know if marked serves a purpose
                 marked.append(hour_list)
                 tempMark_list[hour] = week[day][hour]
                 captured_list[hour] = week[day][hour]
                 recaptured_list[hour] = []
 
             else:
+                '''
                 # WE ARE HERE IS THE DEBUGING
                 # generate c values
                 # UNCOMMENT TO PRINT TESTS
@@ -166,35 +178,41 @@ def CRC(week, occupancy_profile, population):
                 #for occupant in week[day][hour]:
                 #    if occupant not in marked[hour]:
                 #        marked[hour].append(occupant)
-
-                #list all captures for this iteration
+                '''
+                # list all captures for this iteration
                 captured_list[hour] = week[day][hour]
-                #find number of recaptures
+                # find number of recaptures
 
-                #count all recaptures
+                # count all recaptures
                 for occ in week[day][hour]:
                     if occ in tempMark_list[hour]:
                         recaptured_list[hour].append(occ)
                 # mark all non marked occupants
-                m[hour] += len(tempMark_list[hour])
-                c[hour] += len(captured_list[hour])
+                m[hour] = len(tempMark_list[hour])
+                c[hour] = len(captured_list[hour])
+                mc[hour] += m[hour]*c[hour]
                 r[hour] += len(recaptured_list[hour])
                 for occ in week[day][hour]:
                     if occ not in tempMark_list[hour]:
                         tempMark_list[hour].append(occ)
+                if hour == 0:
+                    print("TEMP LIST HOUR 0")
+                    for ele in tempMark_list[hour]:
+                        print(ele.id)
 
-            #summing over multiple days
 
-        if debug:
-            print("C Values")
-            print_seperator()
-            print("DAY: " + str(day))
-            for ele in range(25):
-                if(ele == 0):
-                    print("HOUR " + str(ele))
-                    print(len(tempMark_list[ele]))
-                    print(len(captured_list[ele]))
-                    print(len(recaptured_list[ele]))
+            # summing over multiple days
+
+    if debug:
+        print("LIST Values")
+        print_seperator()
+        print("DAY: " + str(day))
+        for ele in range(25):
+            if(ele == 0):
+                print("HOUR " + str(ele))
+                print(len(tempMark_list[ele]))
+                print(len(captured_list[ele]))
+                print(len(recaptured_list[ele]))
 
     '''for hour in range(25):
         if r[hour] == 0:
@@ -206,17 +224,15 @@ def CRC(week, occupancy_profile, population):
 
     for hour in range(25):
         try:
-            n[hour] = m[hour]*c[hour]/(r[hour]) / 1
+            n[hour] = mc[hour]/(r[hour]) / 1
         except ZeroDivisionError as error:
             n[hour] = 0
     #  print our n values
     for hour in range(1,25):
         n[hour] = n[hour]/n[0]
     if debug:
-        print("M Array:")
-        print(m)
-        print("C Array:")
-        print(c)
+        print("MC Array:")
+        print(mc)
         print("R Array:")
         print(r)
     print(n)
@@ -289,6 +305,9 @@ def run_simulation(list_of_occupants, occupancy_profile,debug):
             # if the current number occupants is less than the occupancy profile add occupants
             # until occupancy profile is reached
             while len(list_found_occupants) < actual_occupants:
+                if hour == 0:
+            # Discount the first hour as it is for summing of the day
+                    list_unfound_occupants[0].hourFirst = True
                 list_unfound_occupants[0].enterbuilding()
                 list_found_occupants.append(list_unfound_occupants[0])
                 list_unfound_occupants = list_unfound_occupants[1:]
@@ -319,7 +338,7 @@ def run_simulation(list_of_occupants, occupancy_profile,debug):
         if debug:
             print()
             for x in range(25):
-                if(hour == 0):
+                if(x == 0 or x == 1 or x == 2):
                     print()
                     print("Hour " + str(x))
                     print_occupants(hourlyList[x])
