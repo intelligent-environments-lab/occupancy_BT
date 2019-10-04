@@ -21,7 +21,7 @@ class Occupant:
         self.detected = detected
         self.counter = 0
         # Number of Hours occupant spends detected before leaving the building
-        self.transitionRatio = 0
+        self.transitionRatio = 2
         self.DeviceID = "None"
         self.firstHour = False
 
@@ -52,7 +52,7 @@ class Occupant:
             print("Error: counter is already 0")
 
     def give_counter(self):
-        self.counter = 2
+        self.counter = 0
 
     # Occupant enters the simulated building and is detected if they have a
     # BT devices they are given the transition ratio regardless of detection
@@ -63,17 +63,17 @@ class Occupant:
         else:
             self.detected = False
             self.onSite = True
-        if self.firstHour:
-            self.firstHour = False
-            self.counter = 0
-        else:
-            self.give_counter()
+        # if self.firstHour:
+        #     self.firstHour = False
+        #     self.counter = 0
+        # else:
+        #     self.give_counter()
     # Simulates 1 hour time interval (This number could be changed and isn't attached to anything physically),
     # removes occupant if they are past the transition ratio, otherwise it lowers the counter
     def simulateinterval(self):
+        # leave the building automatically if this is the first hour
         # leave the building
-        self.lowercounter()
-        if self.counter <= 0:
+        if not(self.roll_stay()):
             self.onSite = False
             self.detected = False
 
@@ -84,6 +84,18 @@ class Occupant:
         self.detected = False
         # reset counter
         self.counter = 0
+
+    # roll for whether the occupant stays or leaves
+    # true = occupant stayed
+    # false = occupant left
+    def roll_stay(self):
+        percentage = 1/self.transitionRatio
+        roll = random.random()
+        if roll < percentage:
+            return True
+        return False
+
+
 
 
 # generates a 10 letter string may or may not be unique because it is poorly written and may result in duplicates
@@ -145,7 +157,6 @@ def CRC(week, occupancy_profile, population):
         # not sure if should get rid r = [0] * 24
         # next perform a daily sample
         for hour in range(25):
-
             if day == 0:
                 hour_list = []
                 for occupant in week[day][hour]:
@@ -237,11 +248,6 @@ def CRC(week, occupancy_profile, population):
         print(r)
     print(n)
 
-
-
-
-
-
 # actual_occupants is how many occupants should be in the building
 # run a simulation on a given list of occupants and returns the number
 # Args:
@@ -252,6 +258,34 @@ def CRC(week, occupancy_profile, population):
 # templist - list for switching the found occupants // probably doesn't need to be done this way
 
 
+def run_sim(list_of_occupants, occupancy_profile,debug):
+    day1 = []
+    day2 = []
+    day3 = []
+    day4 = []
+    day5 = []
+    week = [day1, day2, day3, day4, day5]
+    for day in range(5):
+        # reset values used during the extent of a day
+        day_wide_sample = []
+        hour_sample = []
+        occupants_stayed = []
+        occupants_missing = []
+        for hour in range(25):
+            # if it is the first hour do a sample for the day
+            if hour == 0:
+                day_wide_sample = sample_day(.5,list_of_occupants)
+            #sample out of our daily sample
+            else:
+                hour_sample = sample_day(occupancy_profile[hour],day_wide_sample)
+            # check for occupants from previous interval & status of all occupants
+                for occupant in occupants_stayed:
+                    hour_sample.append(occupant)
+                for occupant in hour_sample
+            # fill the rest of the occupants so that we meet the quota
+            # when running a daily sample is that our new pool for occupancy ratio
+                while hour_sample<len(sample_day()*occupancy_profile[hour]):
+                    return
 
 def run_simulation(list_of_occupants, occupancy_profile,debug):
     day1 = []
@@ -273,41 +307,37 @@ def run_simulation(list_of_occupants, occupancy_profile,debug):
         hourlyList = []
         list_found_occupants = []
         list_unfound_occupants = []
+        sampled_list = []
         random.shuffle(list_of_occupants)
         for occupant in list_of_occupants:
             occupant.reset_occupant()
-        sampled_list = []
-        sampled_list = sample_day(.5, list_of_occupants)
-        if debug:
-            print()
-            print_seperator()
-            print()
-            print("Day " + str(day))
-            print("All Occupants on Day: " +str(day))
-            print_occupants(sampled_list)
         for hour in range(25):
+            if hour == 0:
+                sampled_list = sample_day(.5, list_of_occupants)
             # check how many occupants should be in the building at the time interval
             if hour == 0:
                 actual_occupants = len(sampled_list)
             else:
+                hourlyList = sample_day(occupancy_profile[hour], sampled_list)
                 actual_occupants = occupancy_profile[hour]*len(sampled_list)//1
             # check how many occupants are currently in the building
             list_of_ids = []
             for occupant in list_found_occupants:
                 list_of_ids.append(occupant.id)
+            if(hour!= 0):
+                for occupant in hourlyList:
+                    # make sure occupant is not already in the list
+                    if occupant.onSite and occupant.id not in list_of_ids:
+                        list_found_occupants.append(occupant)
+                    else:
+                        list_unfound_occupants.append(occupant)
 
-            for occupant in sampled_list:
-                # make sure occupant is not already in the list
-                if occupant.onSite and occupant.id not in list_of_ids:
-                    list_found_occupants.append(occupant)
-                else:
-                    list_unfound_occupants.append(occupant)
             # if the current number occupants is less than the occupancy profile add occupants
             # until occupancy profile is reached
             while len(list_found_occupants) < actual_occupants:
-                if hour == 0:
+                #if hour == 0:
             # Discount the first hour as it is for summing of the day
-                    list_unfound_occupants[0].hourFirst = True
+                    #qist_unfound_occupants[0].hourFirst = True
                 list_unfound_occupants[0].enterbuilding()
                 list_found_occupants.append(list_unfound_occupants[0])
                 list_unfound_occupants = list_unfound_occupants[1:]
@@ -324,12 +354,14 @@ def run_simulation(list_of_occupants, occupancy_profile,debug):
             week[day].append(crc_list)
         # update for the stayed occupants for next iteration
             templist = []
-
             for occupant in list_found_occupants:
                 # lower the counter for each occupant in the list
                 occupant.simulateinterval()
                 # add them to the correct list
-                if occupant.onSite:
+                if hour == 0:
+                    occupant.reset_occupant
+                    list_unfound_occupants.append(occupant)
+                elif occupant.onSite:
                     templist.append(occupant)
                 else:
                     list_unfound_occupants.append(occupant)
@@ -344,11 +376,13 @@ def run_simulation(list_of_occupants, occupancy_profile,debug):
                     print_occupants(hourlyList[x])
                     print("WEEK")
                     print_occupants(week[day][x])
+                    print("Found Occupants" +str(len(list_found_occupants)))
                     print
     CRC(week, occupancy_profile, len(sampled_list))
     return
 
 
+#
 def sample_day(sample_ratio, occupant_list):
     counter = 0
     num_day_sample = len(occupant_list)*sample_ratio - 1
