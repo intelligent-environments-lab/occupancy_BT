@@ -1,6 +1,7 @@
 import math
 import random
 import string
+import csv
 
 # notes
 # OCCUPANCY AS a scale of population e.g. 80% occupants stay an hour
@@ -24,6 +25,7 @@ class Occupant:
         self.transitionRatio = 2
         self.DeviceID = "None"
         self.firstHour = False
+        self.transitionArray = [4, 4, 4, 4, 4, 4, 4, 4, 2, 2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 4]
 
     def __str__(self):
         return str(self.id)
@@ -45,12 +47,14 @@ class Occupant:
             print("no mobile device on this occupant")
 
     # Counter value keeps track of how long occupants are supposed to stay in buildings for after they are found
+    # legacy
     def lowercounter(self):
         if self.counter != 0:
              self.counter = self.counter-1
         elif self.counter < 0:
             print("Error: counter is already 0")
 
+    # legacy
     def give_counter(self):
         self.counter = 0
 
@@ -70,10 +74,10 @@ class Occupant:
         #     self.give_counter()
     # Simulates 1 hour time interval (This number could be changed and isn't attached to anything physically),
     # removes occupant if they are past the transition ratio, otherwise it lowers the counter
-    def simulateinterval(self):
+    def simulateinterval(self,hour):
         # leave the building automatically if this is the first hour
         # leave the building
-        if not(self.roll_stay()):
+        if not(self.roll_stay(hour)):
             self.onSite = False
             self.detected = False
 
@@ -88,8 +92,8 @@ class Occupant:
     # roll for whether the occupant stays or leaves
     # true = occupant stayed
     # false = occupant left
-    def roll_stay(self):
-        percentage = 1/self.transitionRatio
+    def roll_stay(self, hour):
+        percentage = 1/self.transitionArray[hour]
         roll = random.random()
         if roll < percentage:
             return True
@@ -104,6 +108,7 @@ def generateUniqueID():
     for x in range(10):
         uniqueID = uniqueID + random.choice(string.ascii_uppercase)
     return uniqueID
+
 
 
 # generate our occupants given a population and, bt_ratio
@@ -194,6 +199,7 @@ def CRC(week, occupancy_profile, population):
                 captured_list[hour] = week[day][hour]
                 # find number of recaptures
 
+
                 # count all recaptures
                 for occ in week[day][hour]:
                     if occ in tempMark_list[hour]:
@@ -247,6 +253,7 @@ def CRC(week, occupancy_profile, population):
         print("R Array:")
         print(r)
     print(n)
+    return n
 
 # actual_occupants is how many occupants should be in the building
 # run a simulation on a given list of occupants and returns the number
@@ -257,7 +264,7 @@ def CRC(week, occupancy_profile, population):
 # list_of_occupants - a list of the total occupants in a building
 # templist - list for switching the found occupants // probably doesn't need to be done this way
 
-
+#legacy
 def run_sim(list_of_occupants, occupancy_profile,debug):
     day1 = []
     day2 = []
@@ -269,24 +276,109 @@ def run_sim(list_of_occupants, occupancy_profile,debug):
         # reset values used during the extent of a day
         day_wide_sample = []
         hour_sample = []
-        occupants_stayed = []
-        occupants_missing = []
+        occupants_previous_timestep = []
         for hour in range(25):
-            # if it is the first hour do a sample for the day
-            if hour == 0:
-                day_wide_sample = sample_day(.5,list_of_occupants)
-            #sample out of our daily sample
-            else:
-                hour_sample = sample_day(occupancy_profile[hour],day_wide_sample)
-            # check for occupants from previous interval & status of all occupants
-                for occupant in occupants_stayed:
-                    hour_sample.append(occupant)
-                for occupant in hour_sample
-            # fill the rest of the occupants so that we meet the quota
-            # when running a daily sample is that our new pool for occupancy ratio
-                while hour_sample<len(sample_day()*occupancy_profile[hour]):
-                    return
+            occupants_missing = []
+            occupants_current_timestep = []
+            occupants_previous_timestep = []
+            templist = []
 
+            # if it is the first hour do a sample for the day
+
+            if hour == 0:
+                day_wide_sample = random.sample(list_of_occupants,int(.5*len(list_of_occupants)//1))
+                week[day].append(day_wide_sample)
+
+            else:
+                if(hour == 11 or hour == 12):
+                    print("Past Occupants:", hour)
+                    print_occupants(occupants_previous_timestep)
+                # check for occupants from previous interval & status of all occupants
+                random.shuffle(occupants_previous_timestep)
+                for occupant in occupants_previous_timestep:
+                    occupants_current_timestep.append(occupant)
+                for occupant in day_wide_sample:
+                    if occupant not in occupants_current_timestep:
+                        occupants_missing.append(occupant)
+                random.shuffle(occupants_missing)
+
+
+                while len(occupants_current_timestep) < occupancy_profile[hour] * len(day_wide_sample) // 1:
+                    if len(occupants_missing) == 0:
+                        break
+                    occupants_missing[0].enterbuilding()
+                    occupants_current_timestep.append(occupants_missing[0])
+                    occupants_missing = occupants_missing[1:]
+                # Receive just the BT devices
+                if(hour == 11 or hour == 12):
+                    # print("Current Occupants:", hour)
+                    # print_occupants(occupants_current_timestep)
+                    print()
+
+                # simulate the intervals for all current occupants
+                for occupant in occupants_current_timestep:
+                    occupant.simulateinterval(hour)
+                # leave building if we onSite is no longer true
+                occupants_previous_timestep = []
+                for occupant in occupants_current_timestep:
+                    if occupant.onSite:
+                        if occupant not in occupants_previous_timestep:
+                            occupants_previous_timestep.append(occupant)
+                crc_list = []
+                for occupant in occupants_current_timestep:
+                    if occupant.hasMD:
+                        crc_list.append(occupant)
+                week[day].append(crc_list)
+            # sample out of our daily sample
+    # print_2d_occupant_matrix(week)
+    CRC(week, occupancy_profile, len(day_wide_sample))
+
+
+def run_sim2(list_of_occupants, occupancy_profile,debug):
+    day1 = []
+    day2 = []
+    day3 = []
+    day4 = []
+    day5 = []
+    week = [day1, day2, day3, day4, day5]
+    for day in range(5):
+        # reset values used during the extent of a day
+        day_wide_sample = []
+        hour_sample = []
+        occupants_previous_timestep = []
+
+        for hour in range(25):
+
+            templist = []
+            occupants_current_timestep = []
+            occupants_previous_timestep = []
+            # if it is the first hour do a sample for the day
+
+            if hour == 0:
+                day_wide_sample = random.sample(list_of_occupants,int(.5*len(list_of_occupants)//1))
+                week[day].append(day_wide_sample)
+            else:
+                if hour == 11 or hour == 12:
+                    print("Past Occupants:", hour)
+                    print_occupants(occupants_previous_timestep)
+                # populate half the list with previous occupants
+                occupants_current_timestep = random.sample(occupants_previous_timestep, int(occupancy_profile[hour]*len(list_of_occupants)//2))
+
+                templist = random.sample(day_wide_sample, int(occupancy_profile[hour]*len(list_of_occupants) // 2))
+                while (len(occupants_current_timestep) < occupancy_profile[hour]*len(list_of_occupants)//2):
+                    templist = []
+
+                crc_list = []
+                for occupant in occupants_current_timestep:
+                    if occupant.hasMD:
+                        crc_list.append(occupant)
+                week[day].append(crc_list)
+            # sample out of our daily sample
+    # print_2d_occupant_matrix(week)
+    CRC(week, occupancy_profile, len(day_wide_sample))
+#not SAMPLING
+
+#legacy
 def run_simulation(list_of_occupants, occupancy_profile,debug):
     day1 = []
     day2 = []
@@ -377,7 +469,7 @@ def run_simulation(list_of_occupants, occupancy_profile,debug):
                     print("WEEK")
                     print_occupants(week[day][x])
                     print("Found Occupants" +str(len(list_found_occupants)))
-                    print
+
     CRC(week, occupancy_profile, len(sampled_list))
     return
 
@@ -425,12 +517,12 @@ def print_2d_occupant_matrix(week):
             for occupant in hour:
                 print("Occupant {} has Device {}".format(occupant, occupant.DeviceID))
 
-
+#for testing
 # runs program step by step with print functions
 def debug():
     # Array of Populations To Be Tested
 
-    test_populationList = [10]
+    test_populationList = [40]
     test_ratioList = [.7]
     occupancy_profile = [.5, .01, .01, .01, .01, .01, .01, .1, .2, .7, .7, .7, .7,
                          .5, .7, .7, .7, .7, .3, .1, .1, .1, .1, .01, .05]
@@ -448,7 +540,7 @@ def debug():
             print("OCCUPANT TEST")
             print_seperator()
             print_occupants(list_of_occupants)
-            list_of_occupants = run_simulation(list_of_occupants, occupancy_profile,True)
+            list_of_occupants = run_sim2(list_of_occupants, occupancy_profile,True)
 
 
 def main():
@@ -470,7 +562,7 @@ def main():
             list_of_occupants = create_occupants(population, ratio)
             random.shuffle(list_of_occupants)
             # set a random number of occupants to found depending on the occupancy profile and time
-            list_of_occupants = run_simulation(list_of_occupants, occupancy_profile,False)
+            list_of_occupants = run_sim(list_of_occupants, occupancy_profile,False)
 
 debug()
 
