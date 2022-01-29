@@ -1,4 +1,4 @@
-# Occupcny detection by Bluetooth device
+# Occupancy detection with Bluetooth device
 
 This repository is for the Bluetooth based occupancy detection system using Raspberry Pi.
 
